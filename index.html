@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clipline — retrouve les tiktokers</title>
+<style>
+  :root{
+    --bg:#14101f;
+    --surface:#1e1830;
+    --surface-alt:#28203e;
+    --text:#f3efff;
+    --text-dim:#a99fc2;
+    --pink:#ff4d7a;
+    --cyan:#33e6c2;
+    --border:rgba(255,255,255,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:linear-gradient(180deg,#191228 0%, #14101f 220px);
+    border-left:1px solid var(--border);
+    border-right:1px solid var(--border);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--border);
+  }
+  .logo{font-weight:800;font-size:22px;letter-spacing:-0.5px;}
+  .logo span{color:var(--pink);}
+  .me-pill{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);}
+  .me-pill b{color:var(--text);font-weight:600;}
+  .link-btn{background:none;border:none;color:var(--text-dim);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;}
+  .link-btn:hover{color:var(--text);}
+  .screen{padding:24px 20px 40px;flex:1;display:flex;flex-direction:column;}
+  h1.hero{font-size:32px;font-weight:800;line-height:1.05;letter-spacing:-0.8px;margin:6px 0 10px;}
+  h1.hero em{
+    font-style:normal;
+    background:linear-gradient(90deg,var(--pink),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  p.sub{color:var(--text-dim);font-size:15px;line-height:1.5;margin:0 0 28px;}
+  .tiktok-btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--text);color:#0d0d0d;
+    border:none;border-radius:10px;
+    padding:15px;font-size:15px;font-weight:700;
+    cursor:pointer;text-decoration:none;
+    margin-top:6px;
+  }
+  .tiktok-btn:hover{filter:brightness(0.95);}
+  label{font-size:13px;color:var(--text-dim);display:block;margin:16px 0 6px;}
+  input, textarea, select{
+    width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:12px 14px;font-size:15px;font-family:inherit;outline:none;
+  }
+  input:focus, textarea:focus, select:focus{border-color:var(--pink);}
+  textarea{resize:none;min-height:70px;}
+  .primary-btn{
+    margin-top:20px;background:var(--pink);color:#1a0a10;border:none;font-weight:700;
+    font-size:15px;padding:14px;border-radius:10px;cursor:pointer;
+  }
+  .primary-btn:hover{filter:brightness(1.08);}
+  .primary-btn:disabled{opacity:0.5;cursor:default;}
+  .error-text{color:var(--pink);font-size:13px;margin-top:10px;}
+  .field-hint{font-size:12px;color:var(--text-dim);margin-top:10px;}
+  .search-row{margin-bottom:18px;}
+  .empty{color:var(--text-dim);font-size:14px;padding:30px 10px;text-align:center;border:1px dashed var(--border);border-radius:12px;}
+  .card-list{display:flex;flex-direction:column;gap:10px;}
+  .profile-card{
+    display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+    border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;cursor:pointer;text-align:left;
+  }
+  .profile-card:hover{background:var(--surface-alt);}
+  .avatar{
+    width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:16px;color:#14101f;background:var(--accent);flex-shrink:0;overflow:hidden;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .card-body{flex:1;min-width:0;}
+  .card-pseudo{font-weight:700;font-size:15px;}
+  .card-niche{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .card-bio{font-size:13px;color:var(--text-dim);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-arrow{color:var(--text-dim);font-size:18px;}
+  .chat-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);}
+  .back-btn{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:0 4px 0 0;}
+  .chat-title{font-weight:700;font-size:16px;}
+  .chat-sub{font-size:12px;color:var(--text-dim);}
+  .messages{flex:1;padding:18px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
+  .bubble{max-width:75%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.4;}
+  .bubble.mine{align-self:flex-end;background:var(--pink);color:#1a0a10;border-bottom-right-radius:4px;}
+  .bubble.theirs{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;}
+  .bubble time{display:block;font-size:10px;opacity:0.6;margin-top:4px;}
+  .composer{display:flex;gap:8px;padding:14px 16px 20px;border-top:1px solid var(--border);}
+  .composer input{flex:1;}
+  .send-btn{background:var(--cyan);border:none;color:#0a1f1a;font-weight:700;border-radius:10px;padding:0 18px;cursor:pointer;font-size:14px;}
+  .send-btn:disabled{opacity:0.5;cursor:default;}
+  .loading-row{color:var(--text-dim);font-size:13px;padding:20px 0;text-align:center;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  const NICHE_COLORS = {
+    "Danse":"#ff4d7a","Humour":"#ffb347","Cuisine":"#33e6c2","Beauté":"#c77dff",
+    "Gaming":"#4dabf7","Musique":"#f783ac","Voyage":"#69db7c","Autre":"#a99fc2"
+  };
+  const NICHES = Object.keys(NICHE_COLORS);
+
+  let state = {
+    loading: true,
+    me: null,            // { id, pseudo, avatar_url, niche, bio }
+    view: "login",        // login | directory | editProfile | chat
+    directory: [],
+    search: "",
+    activeChat: null,     // { id, pseudo, avatar_url }
+    messages: [],
+    sending: false,
+    error: ""
+  };
+
+  const app = document.getElementById("app");
+
+  function nicheColor(niche){ return NICHE_COLORS[niche] || NICHE_COLORS["Autre"]; }
+  function initials(pseudo){ return (pseudo || "?").slice(0,2).toUpperCase(); }
+  function escapeHtml(str){
+    return (str || "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+  function avatarHtml(user, size){
+    const color = nicheColor(user.niche);
+    if(user.avatar_url){
+      return `<div class="avatar" style="--accent:${color};width:${size}px;height:${size}px;"><img src="${escapeHtml(user.avatar_url)}" alt=""></div>`;
+    }
+    return `<div class="avatar" style="--accent:${color};width:${size}px;height:${size}px;">${escapeHtml(initials(user.pseudo))}</div>`;
+  }
+
+  async function api(path, options){
+    const res = await fetch(path, Object.assign({ credentials: "same-origin", headers: { "Content-Type":"application/json" } }, options));
+    if(res.status === 401) return { unauthorized: true };
+    let data = null;
+    try{ data = await res.json(); }catch(e){}
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  async function loadMe(){
+    const r = await api("/api/users/me");
+    if(r.unauthorized || !r.ok || !r.data){ state.me = null; return; }
+    state.me = r.data;
+  }
+
+  async function loadDirectory(){
+    const r = await api("/api/users/search?q=" + encodeURIComponent(state.search));
+    if(r.ok && r.data) state.directory = r.data;
+  }
+
+  async function logout(){
+    await api("/auth/logout", { method: "POST" });
+    state.me = null;
+    state.view = "login";
+    render();
+  }
+
+  async function saveProfile(niche, bio){
+    const r = await api("/api/users/me", { method: "PUT", body: JSON.stringify({ niche, bio }) });
+    if(r.ok){
+      state.me.niche = niche;
+      state.me.bio = bio;
+      state.view = "directory";
+      await loadDirectory();
+    }else{
+      state.error = "Impossible d'enregistrer ton profil, réessaie.";
+    }
+    render();
+  }
+
+  async function openChat(user){
+    state.activeChat = user;
+    state.view = "chat";
+    state.messages = [];
+    render();
+    await refreshMessages();
+    startPolling();
+  }
+  function closeChat(){
+    stopPolling();
+    state.view = "directory";
+    state.activeChat = null;
+    render();
+  }
+  let pollHandle = null;
+  function startPolling(){ stopPolling(); pollHandle = setInterval(refreshMessages, 4000); }
+  function stopPolling(){ if(pollHandle){ clearInterval(pollHandle); pollHandle = null; } }
+
+  async function refreshMessages(){
+    if(!state.activeChat) return;
+    const r = await api("/api/messages/" + state.activeChat.id);
+    if(r.unauthorized){ stopPolling(); state.view = "login"; render(); return; }
+    if(r.ok && r.data) state.messages = r.data;
+    renderMessagesOnly();
+  }
+
+  async function sendMessage(text){
+    if(!text.trim() || state.sending) return;
+    state.sending = true;
+    const r = await api("/api/messages/" + state.activeChat.id, { method: "POST", body: JSON.stringify({ content: text }) });
+    state.sending = false;
+    if(r.ok) await refreshMessages();
+  }
+
+  function formatTime(ts){
+    return new Date(ts).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function renderLogin(){
+    app.innerHTML = `
+      <div class="topbar"><div class="logo">Clip<span>line</span></div></div>
+      <div class="screen">
+        <h1 class="hero">Retrouve les <em>tiktokers</em>.<br>Discute avec eux.</h1>
+        <p class="sub">Connecte-toi avec ton compte TikTok pour rejoindre l'annuaire et retrouver d'autres créateurs par pseudo.</p>
+        <a class="tiktok-btn" href="/auth/tiktok/login">Se connecter avec TikTok</a>
+        <div class="field-hint">Ton pseudo et ton avatar TikTok publics seront visibles par les autres membres de Clipline.</div>
+      </div>
+    `;
+  }
+
+  function renderEditProfile(isFirstTime){
+    app.innerHTML = `
+      <div class="topbar">
+        <div class="logo">Clip<span>line</span></div>
+        <div class="me-pill">@<b>${escapeHtml(state.me.pseudo)}</b></div>
+      </div>
+      <div class="screen">
+        <h1 class="hero" style="font-size:24px;">${isFirstTime ? "Complète ton profil" : "Modifier mon profil"}</h1>
+        <p class="sub">${isFirstTime ? "Dis-en un peu plus sur ton contenu pour que les autres tiktokers te retrouvent facilement." : ""}</p>
+        <label for="f-niche">Ta niche de contenu</label>
+        <select id="f-niche">${NICHES.map(n => `<option value="${n}" ${n===state.me.niche?'selected':''}>${n}</option>`).join("")}</select>
+        <label for="f-bio">Petite bio</label>
+        <textarea id="f-bio" placeholder="Ce que tu postes, ton univers...">${escapeHtml(state.me.bio || "")}</textarea>
+        <button class="primary-btn" id="f-save">Enregistrer</button>
+        ${state.error ? `<div class="error-text">${escapeHtml(state.error)}</div>` : ""}
+        ${!isFirstTime ? `<button class="link-btn" style="margin-top:16px;" id="f-cancel">Annuler</button>` : ""}
+      </div>
+    `;
+    document.getElementById("f-save").onclick = () => {
+      saveProfile(document.getElementById("f-niche").value, document.getElementById("f-bio").value);
+    };
+    if(!isFirstTime){
+      document.getElementById("f-cancel").onclick = () => { state.view = "directory"; render(); };
+    }
+  }
+
+  function renderDirectory(){
+    const filtered = state.directory;
+    app.innerHTML = `
+      <div class="topbar">
+        <div class="logo">Clip<span>line</span></div>
+        <div class="me-pill">@<b>${escapeHtml(state.me.pseudo)}</b>
+          <button class="link-btn" id="edit-btn">profil</button>
+          <button class="link-btn" id="logout-btn">déconnexion</button>
+        </div>
+      </div>
+      <div class="screen">
+        <div class="search-row"><input id="search-input" type="text" placeholder="Rechercher un pseudo TikTok..." value="${escapeHtml(state.search)}"></div>
+        <div class="card-list" id="card-list">
+          ${filtered.length === 0
+            ? `<div class="empty">${state.search ? "Aucun tiktoker trouvé avec ce pseudo." : "L'annuaire est vide pour l'instant. Partage le site pour que d'autres tiktokers se connectent !"}</div>`
+            : filtered.map(p => `
+              <button class="profile-card" style="--accent:${nicheColor(p.niche)}" data-id="${p.id}">
+                ${avatarHtml(p, 40)}
+                <div class="card-body">
+                  <div class="card-pseudo">@${escapeHtml(p.pseudo)}</div>
+                  <div class="card-niche">${escapeHtml(p.niche)}</div>
+                  ${p.bio ? `<div class="card-bio">${escapeHtml(p.bio)}</div>` : ""}
+                </div>
+                <div class="card-arrow">›</div>
+              </button>
+            `).join("")
+          }
+        </div>
+      </div>
+    `;
+    document.getElementById("edit-btn").onclick = () => { state.view = "editProfile"; state.error=""; render(); };
+    document.getElementById("logout-btn").onclick = logout;
+    const searchInput = document.getElementById("search-input");
+    let debounce;
+    searchInput.oninput = (e) => {
+      state.search = e.target.value;
+      clearTimeout(debounce);
+      debounce = setTimeout(async () => { await loadDirectory(); renderDirectory(); document.getElementById("search-input").focus(); }, 300);
+    };
+    document.querySelectorAll(".profile-card").forEach(btn => {
+      const id = parseInt(btn.getAttribute("data-id"), 10);
+      const user = filtered.find(p => p.id === id);
+      btn.onclick = () => openChat(user);
+    });
+  }
+
+  function renderMessagesOnly(){
+    const container = document.getElementById("messages-container");
+    if(!container) return;
+    container.innerHTML = state.messages.length === 0
+      ? `<div class="empty">Aucun message pour l'instant. Dis bonjour à @${escapeHtml(state.activeChat.pseudo)} !</div>`
+      : state.messages.map(m => `
+        <div class="bubble ${m.sender_id === state.me.id ? 'mine' : 'theirs'}">
+          ${escapeHtml(m.content)}
+          <time>${formatTime(m.created_at)}</time>
+        </div>
+      `).join("");
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function renderChat(){
+    app.innerHTML = `
+      <div class="chat-header">
+        <button class="back-btn" id="back-btn">‹</button>
+        ${avatarHtml(state.activeChat, 34)}
+        <div>
+          <div class="chat-title">@${escapeHtml(state.activeChat.pseudo)}</div>
+          <div class="chat-sub">Conversation privée</div>
+        </div>
+      </div>
+      <div class="messages" id="messages-container"></div>
+      <div class="composer">
+        <input id="msg-input" type="text" placeholder="Écris un message..." autocomplete="off">
+        <button class="send-btn" id="send-btn">Envoyer</button>
+      </div>
+    `;
+    document.getElementById("back-btn").onclick = closeChat;
+    renderMessagesOnly();
+    const input = document.getElementById("msg-input");
+    const doSend = async () => {
+      const text = input.value;
+      if(!text.trim()) return;
+      input.value = "";
+      await sendMessage(text);
+    };
+    document.getElementById("send-btn").onclick = doSend;
+    input.addEventListener("keydown", e => { if(e.key === "Enter") doSend(); });
+  }
+
+  function render(){
+    if(state.loading){ app.innerHTML = `<div class="loading-row">Chargement...</div>`; return; }
+    if(state.view === "login") return renderLogin();
+    if(state.view === "editProfile") return renderEditProfile(false);
+    if(state.view === "directory") return renderDirectory();
+    if(state.view === "chat") return renderChat();
+  }
+
+  async function init(){
+    await loadMe();
+    if(state.me){
+      const isFirstTime = !state.me.bio && state.me.niche === "Autre";
+      await loadDirectory();
+      state.view = isFirstTime ? "editProfile" : "directory";
+    }else{
+      state.view = "login";
+    }
+    state.loading = false;
+    render();
+    if(state.view === "editProfile") renderEditProfile(true);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
