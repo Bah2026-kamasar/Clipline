@@ -11,6 +11,7 @@ const messageRoutes = require('./routes/messages');
 
 const PgSession = pgSessionFactory(session);
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
