@@ -19,16 +19,37 @@ async function initDb() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS conversations (
+      id SERIAL PRIMARY KEY,
+      user_a_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      user_b_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      initiator_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(user_a_id, user_b_id)
+    )
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS messages (
       id SERIAL PRIMARY KEY,
       sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       receiver_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      content TEXT NOT NULL,
+      content TEXT,
+      type TEXT DEFAULT 'text',
+      audio_data TEXT,
+      duration_seconds INTEGER,
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
 
-  console.log('Tables prêtes (users, messages).');
+  // Au cas où la table messages existait déjà avant l'ajout des messages vocaux
+  await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'text'`);
+  await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_data TEXT`);
+  await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS duration_seconds INTEGER`);
+  await pool.query(`ALTER TABLE messages ALTER COLUMN content DROP NOT NULL`);
+
+  console.log('Tables prêtes (users, conversations, messages).');
 }
 
 module.exports = { pool, initDb };
